@@ -4,33 +4,65 @@
 
 package frc.robot.subsystems.Climber;
 
-import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkBase.ControlType;
-
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.utils.SubsystemABS;
 
 public class Climber extends SubsystemABS {
   /** Creates a new Climber. */
   private TalonFX Climoter13 = new TalonFX(13);
   private TalonFX Climoter15 = new TalonFX(15);
-  private CANrange Timer = new CANrange(17);
+  private Timer timer = new Timer();
+  private CANrange measure = new CANrange(17);
+  public double rangePosition = 0;
+  ShuffleboardTab tab = Shuffleboard.getTab("CANrange Status");
   public Climber() {
-    
-    
+    Climoter15.setControl(new Follower(Climoter13.getDeviceID(), false));
     
   }
 
   @Override
   public void periodic() {
-    
+    if (rangePosition == 0){
+       GoUpDash(1);
+       tab.add("Elevator Position", rangePosition);
+    }
     
   }
 
-  public void GoUpDash(){
-    
+  public void GoUpDash(int sec){
+    timer.reset();  
+    timer.start();  
+
+    Climoter13.set(0.5);  
+
+    if (timer.get() >= sec) { 
+      Climoter13.set(0);  
+      timer.stop(); 
+    }
+
+    rangePosition = measure.getDistance().getValueAsDouble();
+
+  }
+
+  public void GoDownDash(int sec){
+    timer.reset();  
+    timer.start();  
+
+    Climoter13.set(-0.5);
+
+
+    if (timer.get() >= sec) { 
+      Climoter13.set(0);  
+      timer.stop(); 
+    }
+
+    rangePosition = measure.getDistance().getValueAsDouble();
+
   }
 
   @Override
@@ -53,13 +85,11 @@ public class Climber extends SubsystemABS {
 
   @Override
   public boolean isHealthy() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'isHealthy'");
+    return Climoter13.getDeviceTemp().getValueAsDouble() > 60;
   }
 
   @Override
   public void Failsafe() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'Failsafe'");
+
   }
 }
